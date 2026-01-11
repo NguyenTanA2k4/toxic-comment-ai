@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+streamlit
+transformers
+# Cài bản torch CPU để nhẹ máy
+torch --index-url https://download.pytorch.org/whl/cpu
+requests

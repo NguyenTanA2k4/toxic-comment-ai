@@ -1,42 +1,67 @@
-# frontend.py
 import streamlit as st
 import requests
 
-# Cấu hình giao diện
-st.set_page_config(page_title="AI Moderator", page_icon="🛡️")
+# Cấu hình tiêu đề trang web
+st.set_page_config(page_title="AI Kiểm Duyệt Độc Hại", page_icon="🛡️")
 
-st.title("🛡️ Hệ thống kiểm duyệt bình luận")
-st.write("Nhập bình luận để AI kiểm tra độ độc hại (Toxic Detection).")
+# Tiêu đề chính
+st.title("🛡️ Hệ thống Phát hiện Bình luận Độc hại")
+st.write("Nhập bình luận bên dưới để AI kiểm tra độ 'sạch' nhé!")
 
-# URL của Backend (Chạy local thì là localhost)
+# URL của Backend (Khi chạy Docker chung thì dùng localhost)
 BACKEND_URL = "http://localhost:8000/predict"
 
-# Form nhập liệu
-with st.form("my_form"):
-    text_input = st.text_area("Nội dung bình luận:", height=100)
-    submitted = st.form_submit_button("Kiểm tra")
+# Ô nhập liệu
+text_input = st.text_area("Nội dung bình luận:", height=100, placeholder="Ví dụ: Bạn thật là tuyệt vời...")
 
-    if submitted and text_input:
-        with st.spinner("Đang gửi đến AI Server..."):
+if st.button("Kiểm tra ngay 🚀"):
+    if not text_input.strip():
+        st.warning("Vui lòng nhập nội dung trước khi kiểm tra!")
+    else:
+        with st.spinner("AI đang suy nghĩ..."):
             try:
-                # Gửi request sang Backend
-                payload = {"text": text_input}
-                response = requests.post(BACKEND_URL, json=payload)
+                # Gửi yêu cầu sang Backend
+                response = requests.post(BACKEND_URL, json={"text": text_input})
                 
                 if response.status_code == 200:
-                    data = response.json()
+                    result = response.json()
+                    label = result["label"]
+                    score = result["score"]
                     
-                    # Hiển thị kết quả dựa trên phản hồi từ Backend
-                    st.divider()
-                    score = data["confidence_score"] * 100
+                    # --- PHẦN MỚI: XỬ LÝ MÀU SẮC DỰA TRÊN ĐỘ NGUY HIỂM ---
+                    st.divider() # Kẻ 1 đường gạch ngang cho đẹp
                     
-                    if data["is_toxic"]:
-                        st.error(f"⚠️ KẾT QUẢ: {data['message']}")
-                        st.progress(int(score), text=f"Độ độc hại: {score:.1f}%")
+                    if label == "CLEAN":
+                        # Trường hợp An toàn: Màu XANH
+                        st.success(f"✅ **AN TOÀN (CLEAN)** - Độ tin cậy: {score*100:.1f}%")
+                        st.balloons() # Thả bóng bay chúc mừng
+                        
                     else:
-                        st.success(f"✅ KẾT QUẢ: {data['message']}")
-                        st.metric(label="Độ an toàn", value=f"{100-score:.1f}%")
+                        # Trường hợp Độc hại (TOXIC)
+                        if score > 0.85:
+                            # Mức độ cao (>85%): Màu ĐỎ (Rất nguy hiểm)
+                            st.error(f"⛔ **CỰC KỲ NGUY HIỂM!** (Độ tin cậy: {score*100:.1f}%)")
+                            st.write("👉 Đề xuất: **CHẶN VĨNH VIỄN** tài khoản này.")
+                        
+                        elif score > 0.65:
+                             # Mức độ trung bình (65% - 85%): Màu CAM (Cảnh báo)
+                            st.warning(f"⚠️ **CẢNH BÁO: NGÔN TỪ KHÔNG PHÙ HỢP** (Độ tin cậy: {score*100:.1f}%)")
+                            st.write("👉 Đề xuất: Ẩn bình luận và nhắc nhở.")
+                            
+                        else:
+                            # Mức độ thấp/Lưỡng lự (50% - 65%): Màu VÀNG
+                            st.warning(f"🤔 **NGHI VẤN** (Độ tin cậy: {score*100:.1f}%)")
+                            st.write("👉 AI cảm thấy câu này hơi tiêu cực, cần người xem xét lại.")
+
+                    # Hiện thanh đo mức độ (Progress Bar)
+                    st.write("Thanh đo mức độ tin cậy của AI:")
+                    st.progress(score)
+
                 else:
-                    st.error("Lỗi kết nối đến Server!")
+                    st.error("Lỗi kết nối đến Server AI!")
             except Exception as e:
-                st.error(f"Không thể kết nối Backend. Hãy chắc chắn bạn đã chạy file backend.py. Lỗi: {e}")
+                st.error(f"Có lỗi xảy ra: {e}")
+
+# Thêm thông tin footer
+st.markdown("---")
+st.caption("Phát triển bởi Nhóm 22 - IUH | Model: PhoBERT")

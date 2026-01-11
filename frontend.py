@@ -35,7 +35,7 @@ if st.button("Kiểm tra ngay 🚀"):
                         # Trường hợp An toàn: Màu XANH
                         clean_confidence = 1 - score
                         
-                        st.success(f"✅ **AN TOÀN (CLEAN)** - Độ tin cậy: {score*100:.1f}%")
+                        st.success(f"✅ **AN TOÀN (CLEAN)** - Độ tin cậy: {clean_confidence*100:.1f}%")
                         st.balloons() # Thả bóng bay chúc mừng
                         
                     else:

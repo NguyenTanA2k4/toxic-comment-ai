@@ -1,11 +1,7 @@
 fastapi
 uvicorn
+streamlit
 transformers
-torch
-streamlit>=1.41.0
+# Cài bản torch CPU để nhẹ máy
+torch --index-url https://download.pytorch.org/whl/cpu
 requests
-pydantic
-python-multipart
-SpeechRecognition
-pandas
-matplotlib
